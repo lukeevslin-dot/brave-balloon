@@ -169,17 +169,8 @@ body{
 }
 .g-btn:disabled{opacity:0.5;pointer-events:none}
 
-@keyframes floatPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.85}
-  50%{transform:translate(-50%,-54%) scale(1.05);opacity:1}}
-#launch-hint{
-  position:absolute;left:50%;top:44%;
-  transform:translate(-50%,-50%);
-  text-align:center;color:#ffd580;font-size:18px;font-weight:800;
-  text-shadow:0 0 20px rgba(255,213,128,0.7);
-  pointer-events:none;white-space:nowrap;
-  display:none;
-  animation:floatPulse 1.6s ease-in-out infinite;
-}
+@keyframes floatPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.9}
+  50%{transform:translate(-50%,-54%) scale(1.06);opacity:1}}
 
 /* ===== BREATHING OVERLAY ===== */
 #breath-overlay{
@@ -271,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.5-debug</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.6-debug</div>
   </div>
 </div>
 
@@ -284,7 +275,17 @@ body{
   <div id="stage-info"></div>
   <div id="streak-msg"></div>
   <div id="star-count">⭐ 0</div>
-  <div id="launch-hint">Press SPACE or tap to release the balloon 🎈</div>
+  <button id="launch-btn" onclick="gameRef&&gameRef.showNextBalloon()"
+    style="display:none;position:absolute;left:50%;top:44%;
+           transform:translate(-50%,-50%);
+           background:linear-gradient(135deg,#a855f7,#ffd580);
+           border:none;border-radius:24px;padding:18px 36px;
+           font-size:18px;font-weight:900;font-family:inherit;color:#1a0840;
+           cursor:pointer;pointer-events:all;
+           box-shadow:0 6px 28px rgba(168,85,247,0.55);
+           animation:floatPulse 1.6s ease-in-out infinite">
+    🎈 Release the Balloon!
+  </button>
   <div id="btn-wrap">
     <button class="g-btn" id="btn-trick">🧠 Brain Trick</button>
     <button class="g-btn" id="btn-danger">⚠️ Real Danger</button>
@@ -304,7 +305,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.5-debug</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.6-debug</div>
   </div>
 </div>
 
@@ -664,32 +665,8 @@ class GameScene extends Phaser.Scene {
     this.stagePos=0;
     this.updateStageInfo();
     setBtnsEnabled(false);
-    // Use native browser events — window-level so any tap or keypress works
-    this._launched=false;
-    this._launchCB=(e)=>{
-      if(e.type==='keydown' && e.code!=='Space') return;
-      // Ignore clicks on the Brain Trick / Real Danger buttons
-      if(e.target && (e.target.id==='btn-trick'||e.target.id==='btn-danger')) return;
-      this.launchFirstBalloon();
-    };
-    window.addEventListener('keydown', this._launchCB);
-    window.addEventListener('click',   this._launchCB);
-    window.addEventListener('touchend', this._launchCB, {passive:true});
-    const hint=document.getElementById('launch-hint');
-    if(hint) hint.style.display='block';
-  }
-
-  launchFirstBalloon(){
-    console.log('[BBN] launchFirstBalloon called, _launched='+this._launched);
-    if(this._launched) return;
-    this._launched=true;
-    window.removeEventListener('keydown',  this._launchCB);
-    window.removeEventListener('click',    this._launchCB);
-    window.removeEventListener('touchend', this._launchCB);
-    const hint=document.getElementById('launch-hint');
-    if(hint) hint.style.display='none';
-    this._launchCB=null;
-    this.showNextBalloon();
+    const lb=document.getElementById('launch-btn');
+    if(lb) lb.style.display='block';
   }
 
   updateStageInfo(){
@@ -697,6 +674,8 @@ class GameScene extends Phaser.Scene {
   }
 
   showNextBalloon(){
+    const lb=document.getElementById('launch-btn');
+    if(lb) lb.style.display='none';
     console.log('[BBN] showNextBalloon pos='+this.stagePos+' qLen='+this.stageQueue.length);
     if(this.stagePos>=this.stageQueue.length){ this.completeStage(); return; }
     balloonLocked=false;
@@ -923,14 +902,8 @@ class GameScene extends Phaser.Scene {
   }
 
   completeStage(){
-    if(this._launchCB){
-      window.removeEventListener('keydown',  this._launchCB);
-      window.removeEventListener('click',    this._launchCB);
-      window.removeEventListener('touchend', this._launchCB);
-      this._launchCB=null;
-    }
-    const hint=document.getElementById('launch-hint');
-    if(hint) hint.style.display='none';
+    const lb=document.getElementById('launch-btn');
+    if(lb) lb.style.display='none';
     currentStageIdx++;
     if(currentStageIdx>=stages.length){ this.endGame(); return; }
     document.getElementById('game-ui').style.display='none';
@@ -940,8 +913,8 @@ class GameScene extends Phaser.Scene {
   }
 
   endGame(){
-    const hint=document.getElementById('launch-hint');
-    if(hint) hint.style.display='none';
+    const lb=document.getElementById('launch-btn');
+    if(lb) lb.style.display='none';
     document.getElementById('game-ui').style.display='none';
     showEndScreen();
   }
