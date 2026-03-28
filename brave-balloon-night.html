@@ -262,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.8</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.9</div>
   </div>
 </div>
 
@@ -306,7 +306,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.8</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.9</div>
   </div>
 </div>
 
@@ -716,10 +716,11 @@ class GameScene extends Phaser.Scene {
     // Text
     const raw=thought.text.length>55?thought.text.slice(0,52)+'…':thought.text;
     const displayText=thought.nickname?`"${raw}"\n(${thought.nickname})`:raw;
-    const fs=raw.length>40?'10px':raw.length>26?'12px':'13px';
+    const fs=raw.length>40?'11px':raw.length>26?'13px':'14px';
     const txt=this.add.text(0,-bh*0.06,displayText,{
-      fontSize:fs,fontFamily:'Nunito,sans-serif',color:'#1a0840',
-      fontStyle:'bold',align:'center',wordWrap:{width:bw*0.76},lineSpacing:2
+      fontSize:fs,fontFamily:'Nunito,sans-serif',color:'#1a0040',
+      fontStyle:'bold',align:'center',wordWrap:{width:bw*0.72},lineSpacing:3,
+      stroke:'#ffffff',strokeThickness:3
     }).setOrigin(0.5);
     c.add(txt);
     c.setRotation(Phaser.Math.DegToRad(tilt)).setAlpha(0);
@@ -1112,7 +1113,7 @@ function resetGame(){
   sessionStars=0; brainTrickStreak=0; couragePoints=0; totalBalloons=0;
   document.getElementById('screen4').style.display='none';
   const s1=document.getElementById('screen1');
-  s1.style.display='block'; s1.style.opacity='1';
+  s1.style.display='block'; s1.style.opacity='1'; s1.style.pointerEvents='';
   document.getElementById('thought-list').innerHTML='';
   document.getElementById('color-row').innerHTML='';
   document.getElementById('thought-input').value='';
@@ -1127,6 +1128,9 @@ function resetGame(){
   }
   if(phaserGame) phaserGame.scene.stop('BreathingScene');
   document.getElementById('breath-overlay').style.display='none';
+  document.getElementById('game-ui').style.display='none';
+  document.getElementById('launch-btn').style.display='none';
+  document.getElementById('goblin-game').style.opacity='0';
 }
 
 // ─────────────────────────────────────────────
