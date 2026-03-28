@@ -271,7 +271,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.4</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.5-debug</div>
   </div>
 </div>
 
@@ -304,7 +304,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.4</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.5-debug</div>
   </div>
 </div>
 
@@ -631,6 +631,7 @@ class GameScene extends Phaser.Scene {
   create(){
     gameRef=this;
     this.W=this.scale.width; this.H=this.scale.height;
+    console.log('[BBN] GameScene.create W='+this.W+' H='+this.H);
     this.balloon=null;
     this.stageQueue=[]; this.stagePos=0;
     this.shootGfx=this.add.graphics().setDepth(5);
@@ -639,8 +640,12 @@ class GameScene extends Phaser.Scene {
       fontStyle:'bold',stroke:'#1a0a40',strokeThickness:4
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
 
+    // Debug rect — confirms GameScene is rendering. Remove once balloons work.
+    this._dbg=this.add.graphics().setDepth(20);
+    this._dbg.fillStyle(0xff0000,0.6);
+    this._dbg.fillRect(4,4,44,44);
+
     this.events.on('wake',this.onWake,this);
-    // Only start if stages already populated (i.e. launched by startGame)
     if(stages && stages.length) this.startStage();
   }
 
@@ -675,6 +680,7 @@ class GameScene extends Phaser.Scene {
   }
 
   launchFirstBalloon(){
+    console.log('[BBN] launchFirstBalloon called, _launched='+this._launched);
     if(this._launched) return;
     this._launched=true;
     window.removeEventListener('keydown',  this._launchCB);
@@ -691,13 +697,21 @@ class GameScene extends Phaser.Scene {
   }
 
   showNextBalloon(){
+    console.log('[BBN] showNextBalloon pos='+this.stagePos+' qLen='+this.stageQueue.length);
     if(this.stagePos>=this.stageQueue.length){ this.completeStage(); return; }
     balloonLocked=false;
     setBtnsEnabled(true);
     const thought=this.stageQueue[this.stagePos];
     const W=this.scale.width, H=this.scale.height;
-    this.W=W; this.H=H; // keep in sync
-    this.balloon=this.spawnBalloon(W/2, H+130, thought);
+    this.W=W; this.H=H;
+    console.log('[BBN] spawning at W='+W+' H='+H+' thought='+thought.text);
+    try{
+      this.balloon=this.spawnBalloon(W/2, H+130, thought);
+      console.log('[BBN] balloon created ok', this.balloon);
+    }catch(err){
+      console.error('[BBN] spawnBalloon threw:', err);
+      return;
+    }
     this.tweens.add({
       targets:this.balloon, y:H*0.43, duration:900, ease:'Back.Out',
       onComplete:()=>this.bobBalloon(this.balloon, H*0.43)
