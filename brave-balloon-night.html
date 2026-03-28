@@ -271,7 +271,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.3</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.4</div>
   </div>
 </div>
 
@@ -304,7 +304,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.3</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.4</div>
   </div>
 </div>
 
@@ -659,31 +659,29 @@ class GameScene extends Phaser.Scene {
     this.stagePos=0;
     this.updateStageInfo();
     setBtnsEnabled(false);
-    // Use native browser events — more reliable than Phaser input across devices
+    // Use native browser events — window-level so any tap or keypress works
+    this._launched=false;
     this._launchCB=(e)=>{
       if(e.type==='keydown' && e.code!=='Space') return;
+      // Ignore clicks on the Brain Trick / Real Danger buttons
+      if(e.target && (e.target.id==='btn-trick'||e.target.id==='btn-danger')) return;
       this.launchFirstBalloon();
     };
     window.addEventListener('keydown', this._launchCB);
+    window.addEventListener('click',   this._launchCB);
+    window.addEventListener('touchend', this._launchCB, {passive:true});
     const hint=document.getElementById('launch-hint');
-    if(hint){
-      hint.style.display='block';
-      hint.style.pointerEvents='all';
-      hint.style.cursor='pointer';
-      hint.addEventListener('click', this._launchCB, {once:true});
-    }
+    if(hint) hint.style.display='block';
   }
 
   launchFirstBalloon(){
-    if(!this._launchCB) return;
-    window.removeEventListener('keydown', this._launchCB);
+    if(this._launched) return;
+    this._launched=true;
+    window.removeEventListener('keydown',  this._launchCB);
+    window.removeEventListener('click',    this._launchCB);
+    window.removeEventListener('touchend', this._launchCB);
     const hint=document.getElementById('launch-hint');
-    if(hint){
-      hint.removeEventListener('click', this._launchCB);
-      hint.style.display='none';
-      hint.style.pointerEvents='none';
-      hint.style.cursor='';
-    }
+    if(hint) hint.style.display='none';
     this._launchCB=null;
     this.showNextBalloon();
   }
@@ -912,11 +910,13 @@ class GameScene extends Phaser.Scene {
 
   completeStage(){
     if(this._launchCB){
-      window.removeEventListener('keydown',this._launchCB);
-      const hint=document.getElementById('launch-hint');
-      if(hint){ hint.removeEventListener('click',this._launchCB); hint.style.display='none'; }
+      window.removeEventListener('keydown',  this._launchCB);
+      window.removeEventListener('click',    this._launchCB);
+      window.removeEventListener('touchend', this._launchCB);
       this._launchCB=null;
     }
+    const hint=document.getElementById('launch-hint');
+    if(hint) hint.style.display='none';
     currentStageIdx++;
     if(currentStageIdx>=stages.length){ this.endGame(); return; }
     document.getElementById('game-ui').style.display='none';
