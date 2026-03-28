@@ -262,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v2.2</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v2.3</div>
   </div>
 </div>
 
@@ -306,7 +306,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v2.2</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v2.3</div>
   </div>
 </div>
 
@@ -347,16 +347,67 @@ function ac(){
 function startAmbient(){
   if(ambientOn) return; ambientOn=true;
   const ctx=ac();
-  [65.4,98.0,130.8,196.0,261.6,329.6].forEach((f,i)=>{
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    const lfo=ctx.createOscillator(), lg=ctx.createGain();
-    osc.type='sine'; osc.frequency.value=f;
-    lfo.type='sine'; lfo.frequency.value=0.12+i*0.02;
-    lg.gain.value=0.003;
-    lfo.connect(lg); lg.connect(g.gain); lfo.start();
-    g.gain.value=[0.04,0.03,0.04,0.025,0.03,0.02][i];
-    osc.connect(g); g.connect(ctx.destination); osc.start();
+
+  // Reverb — synthesised impulse response
+  const revBuf=ctx.createBuffer(2,ctx.sampleRate*2.8,ctx.sampleRate);
+  for(let ch=0;ch<2;ch++){
+    const d=revBuf.getChannelData(ch);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.4);
+  }
+  const rev=ctx.createConvolver(); rev.buffer=revBuf;
+  const revGain=ctx.createGain(); revGain.gain.value=0.38;
+  rev.connect(revGain); revGain.connect(ctx.destination);
+
+  // Master bus
+  const master=ctx.createGain(); master.gain.value=0.55;
+  master.connect(ctx.destination);
+  master.connect(rev);
+
+  // Warm chord pad — detuned triangle oscillators through a slow-sweep lowpass
+  const padFilter=ctx.createBiquadFilter();
+  padFilter.type='lowpass'; padFilter.frequency.value=820; padFilter.Q.value=0.6;
+  padFilter.connect(master);
+  const fLfo=ctx.createOscillator(), fLfoG=ctx.createGain();
+  fLfo.type='sine'; fLfo.frequency.value=0.07; fLfoG.gain.value=380;
+  fLfo.connect(fLfoG); fLfoG.connect(padFilter.frequency); fLfo.start();
+  // C3 G3 C4 E4 G4 — two detuned oscillators per note for chorus warmth
+  [130.8,196.0,261.6,329.6,392.0].forEach((f,i)=>{
+    [-6,6].forEach(det=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=f; o.detune.value=det;
+      const aLfo=ctx.createOscillator(), aLfoG=ctx.createGain();
+      aLfo.type='sine'; aLfo.frequency.value=0.04+i*0.011; aLfoG.gain.value=0.006;
+      aLfo.connect(aLfoG); aLfoG.connect(g.gain); aLfo.start();
+      g.gain.setValueAtTime(0,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.018,ctx.currentTime+3.5);
+      o.connect(g); g.connect(padFilter); o.start();
+    });
   });
+
+  // Soft bass drone: C2
+  const bassO=ctx.createOscillator(), bassG=ctx.createGain();
+  const bassF=ctx.createBiquadFilter(); bassF.type='lowpass'; bassF.frequency.value=160;
+  bassO.type='sine'; bassO.frequency.value=65.4;
+  bassG.gain.setValueAtTime(0,ctx.currentTime);
+  bassG.gain.linearRampToValueAtTime(0.065,ctx.currentTime+5);
+  bassO.connect(bassG); bassG.connect(bassF); bassF.connect(master); bassO.start();
+
+  // Gentle pentatonic chimes — C major pentatonic, upper two octaves
+  const penta=[523.25,587.33,659.25,783.99,880.00,1046.50,1174.66,1318.51];
+  function chime(){
+    if(!ambientOn) return;
+    const f=penta[Math.floor(Math.random()*penta.length)];
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='triangle'; o.frequency.value=f;
+    const now=ctx.currentTime;
+    g.gain.setValueAtTime(0,now);
+    g.gain.linearRampToValueAtTime(0.038,now+0.09);
+    g.gain.exponentialRampToValueAtTime(0.001,now+2.6);
+    o.connect(g); g.connect(master);
+    o.start(now); o.stop(now+2.6);
+    setTimeout(chime,1400+Math.random()*3000);
+  }
+  setTimeout(chime,1800);
 }
 
 function playSparkle(){
