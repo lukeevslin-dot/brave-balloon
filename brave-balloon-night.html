@@ -262,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.9</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v2.0</div>
   </div>
 </div>
 
@@ -306,7 +306,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.9</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v2.0</div>
   </div>
 </div>
 
@@ -423,6 +423,12 @@ function generateStages(th){
   }
   const out=[];
   for(let i=0;i<pool.length;i+=4) out.push(pool.slice(i,i+4));
+  // Always produce at least 2 stages so the breathing break is never skipped
+  if(out.length<2){
+    const s=out[0]||[];
+    const mid=Math.ceil(s.length/2);
+    return [s.slice(0,mid), s.slice(mid).length?s.slice(mid):[s[0]]];
+  }
   return out;
 }
 
