@@ -262,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.7-debug</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.8</div>
   </div>
 </div>
 
@@ -276,7 +276,7 @@ body{
   <div id="streak-msg"></div>
   <div id="star-count">⭐ 0</div>
   <button id="launch-btn"
-    onclick="dbg('btn clicked, gameRef='+(gameRef?'SET':'NULL')); gameRef&&gameRef.showNextBalloon()"
+    onclick="gameRef&&gameRef.showNextBalloon()"
     style="display:none;position:absolute;left:50%;top:44%;
            transform:translate(-50%,-50%);
            background:linear-gradient(135deg,#a855f7,#ffd580);
@@ -287,12 +287,6 @@ body{
            animation:floatPulse 1.6s ease-in-out infinite">
     🎈 Release the Balloon!
   </button>
-  <div id="debug-out"
-    style="position:absolute;bottom:5px;left:5px;right:5px;
-           font-size:11px;color:#0f0;background:rgba(0,0,0,0.75);
-           padding:4px 6px;border-radius:6px;pointer-events:none;
-           font-family:monospace;white-space:pre-wrap;max-height:120px;overflow:auto;z-index:99">
-  </div>
   <div id="btn-wrap">
     <button class="g-btn" id="btn-trick">🧠 Brain Trick</button>
     <button class="g-btn" id="btn-danger">⚠️ Real Danger</button>
@@ -312,7 +306,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.7-debug</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.8</div>
   </div>
 </div>
 
@@ -639,7 +633,6 @@ class GameScene extends Phaser.Scene {
   create(){
     gameRef=this;
     this.W=this.scale.width; this.H=this.scale.height;
-    dbg('GameScene.create W='+this.W+' H='+this.H);
     this.balloon=null;
     this.stageQueue=[]; this.stagePos=0;
     this.shootGfx=this.add.graphics().setDepth(5);
@@ -647,11 +640,6 @@ class GameScene extends Phaser.Scene {
       fontSize:'24px',fontFamily:'Nunito,sans-serif',color:'#ffd580',
       fontStyle:'bold',stroke:'#1a0a40',strokeThickness:4
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
-
-    // Debug rect — confirms GameScene is rendering. Remove once balloons work.
-    this._dbg=this.add.graphics().setDepth(20);
-    this._dbg.fillStyle(0xff0000,0.6);
-    this._dbg.fillRect(4,4,44,44);
 
     this.events.on('wake',this.onWake,this);
     if(stages && stages.length) this.startStage();
@@ -683,21 +671,13 @@ class GameScene extends Phaser.Scene {
   showNextBalloon(){
     const lb=document.getElementById('launch-btn');
     if(lb) lb.style.display='none';
-    dbg('showNextBalloon pos='+this.stagePos+' qLen='+this.stageQueue.length);
     if(this.stagePos>=this.stageQueue.length){ this.completeStage(); return; }
     balloonLocked=false;
     setBtnsEnabled(true);
     const thought=this.stageQueue[this.stagePos];
     const W=this.scale.width, H=this.scale.height;
     this.W=W; this.H=H;
-    dbg('spawning W='+W+' H='+H+' t='+thought.text.slice(0,20));
-    try{
-      this.balloon=this.spawnBalloon(W/2, H+130, thought);
-      dbg('balloon ok x='+this.balloon.x+' y='+this.balloon.y);
-    }catch(err){
-      dbg('ERROR: '+err.message);
-      return;
-    }
+    this.balloon=this.spawnBalloon(W/2, H+130, thought);
     this.tweens.add({
       targets:this.balloon, y:H*0.43, duration:900, ease:'Back.Out',
       onComplete:()=>this.bobBalloon(this.balloon, H*0.43)
@@ -717,7 +697,7 @@ class GameScene extends Phaser.Scene {
     // String
     g.lineStyle(1.5,0xcccccc,0.55);
     g.beginPath(); g.moveTo(0,bh/2+8);
-    g.bezierCurveTo(7,bh/2+22,-7,bh/2+42,5,bh/2+62);
+    g.lineTo(5,bh/2+62);
     g.strokePath();
     // Shadow
     g.fillStyle(0x000000,0.1); g.fillEllipse(5,6,bw,bh);
@@ -1022,14 +1002,6 @@ function initPhaser(){
   });
 }
 
-// ─────────────────────────────────────────────
-// DEBUG HELPER
-// ─────────────────────────────────────────────
-function dbg(msg){
-  console.log('[DBG] '+msg);
-  const el=document.getElementById('debug-out');
-  if(el){ el.textContent+=msg+'\n'; el.scrollTop=el.scrollHeight; }
-}
 
 // ─────────────────────────────────────────────
 // SCREEN 1 LOGIC
