@@ -262,7 +262,7 @@ body{
     <div class="color-row" id="color-row"></div>
     <ul class="thought-list" id="thought-list"></ul>
     <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v2.0</div>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v2.1</div>
   </div>
 </div>
 
@@ -306,7 +306,7 @@ body{
     <div class="s4-heading">Thoughts you were brave about tonight:</div>
     <ul class="s4-list" id="s4-list"></ul>
     <button class="again-btn" id="again-btn">Play Again 🌟</button>
-    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v2.0</div>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v2.1</div>
   </div>
 </div>
 
@@ -415,6 +415,21 @@ function escHtml(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Funny make-believe dangers — obviously real threats but totally silly,
+// so the child can practice labelling "Real Danger" with a smile.
+const SILLY_DANGERS = [
+  'A lion escaped the zoo and is waiting outside school 🦁',
+  'A volcano is erupting under my bedroom 🌋',
+  'A T-Rex is chasing the school bus 🦕',
+  'Pirates are raiding the kitchen for treasure 🏴‍☠️',
+  'A giant octopus moved into the bathtub 🐙',
+  'Aliens are beaming up my homework 👽',
+  'A dragon wants to toast my sandwich 🐉',
+  'Zombies are after my ice cream 🧟',
+  'A shark is hiding in the swimming pool 🦈',
+  'A bear broke into the fridge and ate everything 🐻',
+].map(text=>({text, nickname:'make-believe!', palette:{fill:0xffb347,hex:'#ffb347'}, hex:'#ffb347'}));
+
 function generateStages(th){
   const pool=[...th,...th];
   for(let i=pool.length-1;i>0;i--){
@@ -427,8 +442,16 @@ function generateStages(th){
   if(out.length<2){
     const s=out[0]||[];
     const mid=Math.ceil(s.length/2);
-    return [s.slice(0,mid), s.slice(mid).length?s.slice(mid):[s[0]]];
+    out.length=0;
+    out.push(s.slice(0,mid), s.slice(mid).length?s.slice(mid):[s[0]]);
   }
+  // Shuffle the silly dangers pool and inject 1 per stage
+  const sillyShuffle=[...SILLY_DANGERS].sort(()=>Math.random()-0.5);
+  out.forEach((stage,i)=>{
+    const danger=sillyShuffle[i%sillyShuffle.length];
+    const pos=Math.floor(Math.random()*stage.length);
+    stage.splice(pos,0,danger);
+  });
   return out;
 }
 
