@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Brave Balloon Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Nunito','Segoe UI',sans-serif;
+  background:linear-gradient(180deg,#07031e 0%,#100840 30%,#1c0d58 60%,#2a1060 100%);
+  min-height:100vh;overflow:hidden;touch-action:manipulation;
+}
+#game{position:fixed;inset:0;z-index:1}
+#game canvas{display:block}
+
+/* ===== SCREEN 1 ===== */
+#screen1{
+  position:fixed;inset:0;z-index:10;
+  background:linear-gradient(180deg,rgba(7,3,30,0.93) 0%,rgba(16,8,64,0.88) 100%);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transition:opacity 0.6s;
+}
+.s1-inner{max-width:460px;margin:0 auto;padding:28px 20px 50px}
+.s1-title{
+  font-size:clamp(22px,6vw,30px);font-weight:900;color:#ffd580;
+  text-shadow:0 0 24px rgba(255,213,128,0.55);text-align:center;
+  margin-bottom:6px;
+}
+.s1-sub{font-size:14px;color:#c0aef0;font-weight:600;text-align:center;margin-bottom:22px}
+
+.goblin-card{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;padding:14px 16px;margin-bottom:22px;
+}
+.goblin-img{width:123px;height:90px;image-rendering:pixelated;flex-shrink:0}
+.goblin-speech{font-size:13px;color:#ddd0ff;line-height:1.5}
+.goblin-speech b{color:#ffd580;display:block;font-size:14px;margin-bottom:3px}
+
+.input-card{
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;padding:18px;margin-bottom:16px;
+}
+.lbl{
+  font-size:12px;font-weight:800;color:#a090d0;
+  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px;
+}
+.thought-ta{
+  width:100%;background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(200,180,255,0.3);border-radius:12px;
+  padding:12px 14px;font-size:15px;font-family:inherit;color:#f0ecff;
+  outline:none;transition:border-color 0.2s;resize:none;
+  margin-bottom:12px;
+}
+.thought-ta::placeholder{color:rgba(200,180,255,0.4)}
+.thought-ta:focus{border-color:rgba(200,180,255,0.7)}
+.nick-hint{font-size:11px;color:rgba(200,180,255,0.45);font-style:italic;margin-bottom:6px}
+.nick-in{
+  width:100%;background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(200,180,255,0.2);border-radius:12px;
+  padding:10px 14px;font-size:13px;font-family:inherit;color:#d0c8f0;
+  outline:none;transition:border-color 0.2s;margin-bottom:12px;
+}
+.nick-in::placeholder{color:rgba(200,180,255,0.3)}
+.nick-in:focus{border-color:rgba(200,180,255,0.6)}
+.add-btn{
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,#7c5ce0,#a855f7);
+  border:none;border-radius:12px;color:#fff;
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+  box-shadow:0 4px 16px rgba(124,92,224,0.45);transition:transform 0.12s;
+}
+.add-btn:active{transform:scale(0.97)}
+
+.color-row{display:flex;gap:7px;flex-wrap:wrap;min-height:18px;margin-bottom:16px}
+.c-dot{
+  width:16px;height:16px;border-radius:50%;
+  animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+.thought-list{list-style:none;margin-bottom:22px}
+.thought-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 14px;background:rgba(255,255,255,0.05);
+  border-radius:12px;margin-bottom:8px;border-left:3px solid #7c5ce0;
+  animation:slideIn 0.3s ease-out;
+}
+@keyframes slideIn{from{transform:translateX(-10px);opacity:0}to{transform:translateX(0);opacity:1}}
+.t-star{font-size:16px;flex-shrink:0;margin-top:1px}
+.t-block{flex:1}
+.t-main{font-size:14px;color:#e8e0ff;font-weight:700;line-height:1.3}
+.t-nick{font-size:12px;color:#a090d0;margin-top:2px;font-style:italic}
+
+.start-btn{
+  display:none;width:100%;padding:18px;
+  background:linear-gradient(135deg,#f7c948,#ffa040);
+  border:none;border-radius:16px;color:#1a0a40;
+  font-size:18px;font-weight:900;font-family:inherit;cursor:pointer;
+  box-shadow:0 6px 28px rgba(247,201,72,0.55);transition:transform 0.12s;
+  animation:glow 2s ease-in-out infinite;
+}
+.start-btn.vis{display:block}
+.start-btn:active{transform:scale(0.97)}
+@keyframes glow{0%,100%{box-shadow:0 6px 28px rgba(247,201,72,0.55)}50%{box-shadow:0 6px 44px rgba(247,201,72,0.9)}}
+
+/* ===== GAME UI ===== */
+#game-ui{position:fixed;inset:0;z-index:5;pointer-events:none;display:none}
+
+#courage-wrap{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+#courage-track{
+  width:11px;height:170px;
+  background:rgba(255,255,255,0.1);border-radius:6px;
+  border:1px solid rgba(255,255,255,0.15);
+  display:flex;align-items:flex-end;overflow:hidden;
+}
+#courage-fill{
+  width:100%;height:0%;
+  background:linear-gradient(0deg,#c084fc,#ffd580);
+  border-radius:6px;transition:height 0.7s cubic-bezier(0.34,1.56,0.64,1);
+}
+#courage-lbl{
+  font-size:9px;font-weight:800;color:rgba(200,180,255,0.65);
+  text-transform:uppercase;letter-spacing:0.1em;
+  writing-mode:vertical-rl;transform:rotate(180deg);
+}
+
+#stage-info{
+  position:absolute;top:15px;left:50%;transform:translateX(-50%);
+  font-size:13px;font-weight:700;color:rgba(200,180,255,0.7);
+  pointer-events:none;white-space:nowrap;
+}
+#streak-msg{
+  position:absolute;top:38px;left:50%;transform:translateX(-50%);
+  font-size:13px;font-weight:800;color:#ffd580;
+  pointer-events:none;opacity:0;transition:opacity 0.3s;
+  text-shadow:0 0 12px rgba(255,213,128,0.7);white-space:nowrap;
+}
+#star-count{
+  position:absolute;top:14px;right:14px;
+  font-size:14px;font-weight:800;color:#ffd580;pointer-events:none;
+}
+
+#btn-wrap{
+  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  display:flex;gap:12px;pointer-events:all;
+  width:min(440px,calc(100vw - 36px));
+}
+.g-btn{
+  flex:1;padding:17px 8px;border:none;border-radius:20px;
+  font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;
+  transition:transform 0.12s;user-select:none;-webkit-user-select:none;line-height:1.3;
+}
+.g-btn:active{transform:scale(0.94)!important}
+#btn-trick{
+  background:linear-gradient(135deg,#7c5ce0,#a855f7);color:#fff;
+  box-shadow:0 6px 20px rgba(124,92,224,0.55);
+}
+#btn-danger{
+  background:linear-gradient(135deg,#e05c8a,#f07840);color:#fff;
+  box-shadow:0 6px 20px rgba(224,92,138,0.55);
+}
+.g-btn:disabled{opacity:0.5;pointer-events:none}
+
+@keyframes floatPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.85}
+  50%{transform:translate(-50%,-54%) scale(1.05);opacity:1}}
+#launch-hint{
+  position:absolute;left:50%;top:44%;
+  transform:translate(-50%,-50%);
+  text-align:center;color:#ffd580;font-size:18px;font-weight:800;
+  text-shadow:0 0 20px rgba(255,213,128,0.7);
+  pointer-events:none;white-space:nowrap;
+  display:none;
+  animation:floatPulse 1.6s ease-in-out infinite;
+}
+
+/* ===== BREATHING OVERLAY ===== */
+#breath-overlay{
+  position:fixed;inset:0;z-index:6;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;pointer-events:none;
+}
+#breath-main{
+  font-size:clamp(22px,6vw,30px);font-weight:900;color:#f0e8ff;
+  text-align:center;text-shadow:0 0 32px rgba(200,160,255,0.9);
+  transition:opacity 0.6s;
+}
+#breath-sub{font-size:14px;color:rgba(200,180,255,0.7);font-weight:600}
+
+/* ===== SCREEN 4 ===== */
+#screen4{
+  position:fixed;inset:0;z-index:10;
+  background:linear-gradient(180deg,rgba(7,3,30,0.93) 0%,rgba(16,8,64,0.90) 100%);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:none;transition:opacity 0.8s;
+}
+.s4-inner{max-width:460px;margin:0 auto;padding:40px 24px 60px;text-align:center}
+.s4-stars{font-size:44px;margin-bottom:8px;animation:floatY 3s ease-in-out infinite}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.s4-title{
+  font-size:clamp(22px,6vw,28px);font-weight:900;color:#ffd580;
+  text-shadow:0 0 20px rgba(255,213,128,0.5);margin-bottom:6px;
+}
+.s4-msg{font-size:17px;color:#c8b8f0;font-weight:600;margin-bottom:28px;line-height:1.4}
+.s4-heading{
+  font-size:13px;font-weight:800;color:#9080c0;
+  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;
+}
+.s4-list{list-style:none;margin-bottom:32px;text-align:left}
+.s4-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:rgba(255,255,255,0.05);
+  border-radius:12px;margin-bottom:8px;
+  animation:slideIn 0.35s ease-out both;
+}
+.s4-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.s4-item span{font-size:14px;color:#e0d8ff;font-weight:600}
+.again-btn{
+  width:100%;padding:18px;
+  background:linear-gradient(135deg,#7c5ce0,#a855f7);
+  border:none;border-radius:16px;color:#fff;
+  font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;
+  box-shadow:0 6px 28px rgba(124,92,224,0.55);transition:transform 0.12s;
+}
+.again-btn:active{transform:scale(0.97)}
+</style>
+</head>
+<body>
+
+<!-- Phaser canvas -->
+<div id="game"></div>
+
+<!-- Breathing text overlay -->
+<div id="breath-overlay">
+  <div id="breath-main">Breathe in…</div>
+  <div id="breath-sub">3 breaths to go</div>
+</div>
+
+<!-- ===== SCREEN 1 ===== -->
+<div id="screen1">
+  <div class="s1-inner">
+    <div class="s1-title">✨ Build Your Brave List</div>
+    <div class="s1-sub">Every thought you type is an act of bravery.</div>
+
+    <div class="goblin-card">
+      <img class="goblin-img" id="goblin-img" alt="Brain Goblin">
+      <div class="goblin-speech">
+        <b>Meet the Brain Goblin! 👾</b>
+        He sends silly false alarms. Not scary — just a little mixed-up.
+        Type his tricks below, and you'll be in charge of him!
+      </div>
+    </div>
+
+    <div class="input-card">
+      <div class="lbl">What's the thought? 💭</div>
+      <textarea class="thought-ta" id="thought-input" rows="2"
+        placeholder="e.g. What if I didn't wash my hands enough?"></textarea>
+      <div class="lbl">Give it a silly nickname <span style="font-weight:600;color:#6050a0;font-size:11px">(optional)</span></div>
+      <div class="nick-hint">e.g. "The Germs Brain" or "The Did-I-Lock-It Goblin"</div>
+      <input class="nick-in" id="nick-input" type="text" placeholder="Nickname…">
+      <button class="add-btn" id="add-btn">+ Add to Brave List ⭐</button>
+    </div>
+
+    <div class="color-row" id="color-row"></div>
+    <ul class="thought-list" id="thought-list"></ul>
+    <button class="start-btn" id="start-btn">I'm Ready — Let's Go 🚀</button>
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:rgba(200,180,255,0.25);letter-spacing:0.05em">v1.3</div>
+  </div>
+</div>
+
+<!-- ===== GAME UI ===== -->
+<div id="game-ui">
+  <div id="courage-wrap">
+    <div id="courage-track"><div id="courage-fill"></div></div>
+    <div id="courage-lbl">Courage</div>
+  </div>
+  <div id="stage-info"></div>
+  <div id="streak-msg"></div>
+  <div id="star-count">⭐ 0</div>
+  <div id="launch-hint">Press SPACE or tap to release the balloon 🎈</div>
+  <div id="btn-wrap">
+    <button class="g-btn" id="btn-trick">🧠 Brain Trick</button>
+    <button class="g-btn" id="btn-danger">⚠️ Real Danger</button>
+  </div>
+  <!-- Goblin corner decoration — plain GIF, no Phaser loader needed -->
+  <img id="goblin-game" src="" alt=""
+    style="position:absolute;bottom:170px;right:14px;width:123px;height:90px;
+           image-rendering:pixelated;opacity:0;transition:opacity 0.6s;pointer-events:none">
+</div>
+
+<!-- ===== SCREEN 4 ===== -->
+<div id="screen4">
+  <div class="s4-inner">
+    <div class="s4-stars" id="s4-stars">⭐⭐⭐</div>
+    <div class="s4-title">You did it! 🌙</div>
+    <div class="s4-msg" id="s4-msg"></div>
+    <div class="s4-heading">Thoughts you were brave about tonight:</div>
+    <ul class="s4-list" id="s4-list"></ul>
+    <button class="again-btn" id="again-btn">Play Again 🌟</button>
+    <div style="margin-top:18px;font-size:11px;color:rgba(200,180,255,0.3);letter-spacing:0.05em">v1.3</div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// SPRITE DATA
+// ─────────────────────────────────────────────
+const WALK_GIF_B64 = 'R0lGODlhKQAeALMJAHMVU9ZLS/CWeLMnTJFdN8mZS2NMJuO+abMoTf///wAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/wtYTVAgRGF0YVhNUDw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDowNDgwMTE3NDA3MjA2ODExODIyQUU4NTIzREFEQ0E3MSIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDoxMTE3NjU3QUMwQUQxMUU2QUZFM0RFMzM3QTk1MzRFQSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDoxMTE3NjU3OUMwQUQxMUU2QUZFM0RFMzM3QTk1MzRFQSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M2IChNYWNpbnRvc2gpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NzRGODFCNTkwRDIwNjgxMTgzRDFERDc4MTJGM0YyREUiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6MDQ4MDExNzQwNzIwNjgxMTgyMkFFODUyM0RBRENBNzEiLz4gPC9yZGY6RGVzY3JpcHRpb24+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';
+
+const WALK_PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAZoAAAAeCAYAAAAVUNgZAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2hpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDowNDgwMTE3NDA3MjA2ODExODIyQUU4NTIzREFEQ0E3MSIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozNUMxQTZFMkMwQUQxMUU2QUZFM0RFMzM3QTk1MzRFQSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozNUMxQTZFMUMwQUQxMUU2QUZFM0RFMzM3QTk1MzRFQSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M2IChNYWNpbnRvc2gpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NzRGODFCNTkwRDIwNjgxMTgzRDFERDc4MTJGM0YyREUiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6MDQ4MDExNzQwNzIwNjgxMTgyMkFFODUyM0RBRENBNzEiLz4gPC9yZGY6RGVzY3Jp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';
+
+// ─────────────────────────────────────────────
+// PALETTE & STATE
+// ─────────────────────────────────────────────
+const PALETTE = [
+  {fill:0xffa0b4,hex:'#ffa0b4'},{fill:0xffb347,hex:'#ffb347'},
+  {fill:0xffe066,hex:'#ffe066'},{fill:0x8ec9f0,hex:'#8ec9f0'},
+  {fill:0xb39ddb,hex:'#b39ddb'},{fill:0x80deea,hex:'#80deea'},
+  {fill:0xf8a0c8,hex:'#f8a0c8'},{fill:0xa5d6a7,hex:'#a5d6a7'},
+  {fill:0xce93d8,hex:'#ce93d8'},{fill:0x90caf9,hex:'#90caf9'}
+];
+
+let thoughts=[], stages=[], currentStageIdx=0;
+let sessionStars=0, brainTrickStreak=0, couragePoints=0, totalBalloons=0;
+let phaserGame=null, balloonLocked=false;
+let skyRef=null, gameRef=null;
+
+// ─────────────────────────────────────────────
+// AUDIO
+// ─────────────────────────────────────────────
+let actx=null, ambientOn=false;
+
+function ac(){
+  if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)();
+  return actx;
+}
+
+function startAmbient(){
+  if(ambientOn) return; ambientOn=true;
+  const ctx=ac();
+  [65.4,98.0,130.8,196.0,261.6,329.6].forEach((f,i)=>{
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    const lfo=ctx.createOscillator(), lg=ctx.createGain();
+    osc.type='sine'; osc.frequency.value=f;
+    lfo.type='sine'; lfo.frequency.value=0.12+i*0.02;
+    lg.gain.value=0.003;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    g.gain.value=[0.04,0.03,0.04,0.025,0.03,0.02][i];
+    osc.connect(g); g.connect(ctx.destination); osc.start();
+  });
+}
+
+function playSparkle(){
+  const ctx=ac();
+  [523.25,659.25,783.99,1046.50,1318.51].forEach((f,i)=>{
+    setTimeout(()=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.07,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+0.5);
+    },i*70);
+  });
+}
+
+function playWhoosh(){
+  const ctx=ac(), dur=0.6;
+  const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
+  const s=ctx.createBufferSource(), f=ctx.createBiquadFilter(), g=ctx.createGain();
+  f.type='bandpass'; f.frequency.value=600; f.Q.value=0.8; g.gain.value=0.055;
+  s.buffer=buf; s.connect(f); f.connect(g); g.connect(ctx.destination); s.start();
+}
+
+function playCelebration(){
+  const ctx=ac();
+  [392,523.25,659.25,783.99,1046.50,1318.51,1567.98].forEach((f,i)=>{
+    setTimeout(()=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=i%2?'triangle':'sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.07,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.65);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+0.65);
+    },i*90);
+  });
+}
+
+function playBreathTone(phase){
+  const ctx=ac(), o=ctx.createOscillator(), g=ctx.createGain();
+  o.type='sine'; o.frequency.value=phase==='in'?220:174.6;
+  g.gain.setValueAtTime(0,ctx.currentTime);
+  g.gain.linearRampToValueAtTime(0.04,ctx.currentTime+0.6);
+  g.gain.linearRampToValueAtTime(0.04,ctx.currentTime+3.0);
+  g.gain.linearRampToValueAtTime(0,ctx.currentTime+4.2);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime+4.2);
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function generateStages(th){
+  const pool=[...th,...th];
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const out=[];
+  for(let i=0;i<pool.length;i+=4) out.push(pool.slice(i,i+4));
+  return out;
+}
+
+// ─────────────────────────────────────────────
+// PHASER – SKY SCENE
+// ─────────────────────────────────────────────
+class SkyScene extends Phaser.Scene {
+  constructor(){ super({key:'SkyScene'}); }
+
+  // No preload needed — all assets are HTML elements, not Phaser textures
+
+  create(){
+    skyRef=this;
+    const W=this.scale.width, H=this.scale.height;
+    this.W=W; this.H=H;
+
+    this.bgGfx=this.add.graphics();
+    this.starsGfx=this.add.graphics();
+    this.permGfx=this.add.graphics();
+    this.auroraGfx=this.add.graphics();
+    this.moonGfx=this.add.graphics();
+
+    this.drawBg(W,H);
+    this.initStars(W,H);
+
+    this.permStars=[];
+    this.constellations=[];
+    this.auroraActive=false; this.auroraT=0; this.auroraAlpha=0;
+    this.moonScale=1;
+    this.moonX=W*0.80; this.moonY=H*0.14;
+    this.drawMoon(1);
+
+    this.scale.on('resize',(gs)=>{
+      this.W=gs.width; this.H=gs.height;
+      this.drawBg(gs.width,gs.height);
+      this.initStars(gs.width,gs.height);
+    });
+
+    // Pre-launch GameScene now so gameRef is set long before the user clicks Start
+    this.scene.launch('GameScene');
+  }
+
+  drawBg(W,H){
+    // Painted gradient sky using layered rectangles
+    this.bgGfx.clear();
+    const bands=[
+      {y:0,h:H*0.25,c:0x07031e,a:1},
+      {y:H*0.2,h:H*0.35,c:0x100840,a:1},
+      {y:H*0.5,h:H*0.3,c:0x1c0d58,a:1},
+      {y:H*0.75,h:H*0.3,c:0x2a1060,a:1}
+    ];
+    bands.forEach(b=>{
+      this.bgGfx.fillStyle(b.c,b.a);
+      this.bgGfx.fillRect(0,b.y,W,b.h);
+    });
+  }
+
+  initStars(W,H){
+    this.stars=[];
+    const n=Math.floor(W*H/2600);
+    for(let i=0;i<n;i++){
+      this.stars.push({
+        x:Math.random()*W, y:Math.random()*H*0.88,
+        r:Math.random()*1.7+0.3,
+        base:Math.random()*0.55+0.25,
+        spd:Math.random()*0.018+0.004,
+        off:Math.random()*Math.PI*2,
+        col:[0xffffff,0xffd8b0,0xc8d0ff,0xffc8e8][Math.floor(Math.random()*4)]
+      });
+    }
+    this.dust=[];
+    for(let i=0;i<30;i++){
+      this.dust.push({
+        x:Math.random()*W, y:Math.random()*H,
+        r:Math.random()*1.2+0.3, vy:-(Math.random()*0.25+0.06),
+        vx:(Math.random()-0.5)*0.15,
+        a:Math.random()*0.22+0.04,
+        col:[0xffd580,0xc084fc,0x80deea,0xffa0b4][Math.floor(Math.random()*4)],
+        W,H
+      });
+    }
+  }
+
+  drawMoon(sc){
+    const mx=this.moonX, my=this.moonY, r=36*sc;
+    this.moonGfx.clear();
+    [[r+28,0.04],[r+16,0.08],[r+7,0.14]].forEach(([gr,ga])=>{
+      this.moonGfx.fillStyle(0xfff4d0,ga);
+      this.moonGfx.fillCircle(mx,my,gr);
+    });
+    this.moonGfx.fillStyle(0xfff8e0,1);
+    this.moonGfx.fillCircle(mx,my,r);
+    this.moonGfx.fillStyle(0xefe8c0,0.4);
+    this.moonGfx.fillCircle(mx+r*0.26,my-r*0.14,r*0.2);
+    this.moonGfx.fillStyle(0xefe8c0,0.25);
+    this.moonGfx.fillCircle(mx-r*0.3,my+r*0.28,r*0.13);
+  }
+
+  addPermStar(x,y,col){
+    this.permStars.push({x,y,col,a:0,target:0.65+Math.random()*0.35,r:1.4+Math.random()*1.6});
+  }
+
+  addConstellation(cx,cy){
+    const pts=[];
+    for(let i=0;i<5;i++) pts.push({x:cx+(Math.random()-0.5)*55,y:cy+(Math.random()-0.5)*38,a:0,r:2});
+    this.constellations.push({pts,la:0});
+  }
+
+  triggerAurora(){
+    this.auroraActive=true; this.auroraT=0; this.auroraAlpha=0;
+  }
+
+  triggerMoonPulse(){
+    this.tweens.add({
+      targets:this, moonScale:1.25, duration:600, ease:'Sine.Out',
+      yoyo:true, onUpdate:()=>this.drawMoon(this.moonScale)
+    });
+  }
+
+  spawnAnimal(){
+    const W=this.W, H=this.H;
+    const emojis=['🦊','🐰','🦉','🐢','🐸','🦋','🌸'];
+    const em=emojis[Math.floor(Math.random()*emojis.length)];
+    const c=this.add.container(W+60,H*0.28+Math.random()*H*0.22);
+    const g=this.add.graphics();
+    const pal=PALETTE[Math.floor(Math.random()*PALETTE.length)];
+    g.fillStyle(pal.fill,0.92); g.fillEllipse(0,-14,42,52);
+    g.fillStyle(pal.fill,1); g.fillCircle(0,12,6);
+    g.lineStyle(1,0xcccccc,0.55); g.beginPath();
+    g.moveTo(0,18); g.lineTo(0,32); g.strokePath();
+    const t=this.add.text(0,-13,em,{fontSize:'18px'}).setOrigin(0.5);
+    c.add([g,t]); c.setAlpha(0);
+    this.tweens.add({targets:c,alpha:1,duration:400});
+    this.tweens.add({targets:c,x:-80,duration:9000,ease:'Linear',onComplete:()=>c.destroy()});
+    this.tweens.add({targets:c,y:c.y-18,duration:2200,ease:'Sine.InOut',yoyo:true,repeat:-1});
+  }
+
+  update(time){
+    const t=time/1000, W=this.W, H=this.H;
+
+    // Stars
+    this.starsGfx.clear();
+    this.stars.forEach(s=>{
+      const a=s.base*(0.5+0.5*Math.sin(t*s.spd*20+s.off));
+      this.starsGfx.fillStyle(s.col,a);
+      this.starsGfx.fillCircle(s.x,s.y,s.r);
+    });
+
+    // Dust
+    this.dust.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.y<-8){p.y=p.H+8;p.x=Math.random()*p.W;}
+      this.starsGfx.fillStyle(p.col,p.a*(0.5+0.5*Math.sin(t*0.4+p.x*0.01)));
+      this.starsGfx.fillCircle(p.x,p.y,p.r);
+    });
+
+    // Permanent stars
+    this.permGfx.clear();
+    this.permStars.forEach(s=>{
+      if(s.a<s.target) s.a=Math.min(s.target,s.a+0.012);
+      const tw=s.a*(0.65+0.35*Math.sin(t*1.3+s.x*0.05));
+      this.permGfx.fillStyle(s.col,tw);
+      this.permGfx.fillCircle(s.x,s.y,s.r);
+      if(s.r>2.5){
+        this.permGfx.lineStyle(0.8,s.col,tw*0.5);
+        this.permGfx.beginPath();
+        this.permGfx.moveTo(s.x-s.r*2.2,s.y); this.permGfx.lineTo(s.x+s.r*2.2,s.y);
+        this.permGfx.moveTo(s.x,s.y-s.r*2.2); this.permGfx.lineTo(s.x,s.y+s.r*2.2);
+        this.permGfx.strokePath();
+      }
+    });
+
+    // Constellations
+    this.constellations.forEach(c=>{
+      c.pts.forEach(p=>{ if(p.a<0.85) p.a+=0.008; this.permGfx.fillStyle(0xffd580,p.a); this.permGfx.fillCircle(p.x,p.y,p.r); });
+      if(c.la<0.28) c.la+=0.004;
+      if(c.pts.length>1){
+        this.permGfx.lineStyle(0.8,0xffd580,c.la);
+        this.permGfx.beginPath();
+        c.pts.forEach((p,i)=>i?this.permGfx.lineTo(p.x,p.y):this.permGfx.moveTo(p.x,p.y));
+        this.permGfx.strokePath();
+      }
+    });
+
+    // Aurora
+    this.auroraGfx.clear();
+    if(this.auroraActive){
+      this.auroraT+=0.016;
+      if(this.auroraT<1) this.auroraAlpha=this.auroraT;
+      else if(this.auroraT<4) this.auroraAlpha=1;
+      else if(this.auroraT<5.2) this.auroraAlpha=5.2-this.auroraT;
+      else { this.auroraAlpha=0; this.auroraActive=false; }
+      [0x00e5ff,0x7c5ce0,0xa8ff78,0xff7eb3].forEach((col,b)=>{
+        const yo=b*28+35, wave=Math.sin(t*0.5+b)*12;
+        this.auroraGfx.fillStyle(col,this.auroraAlpha*0.11*(0.5+0.5*Math.sin(t+b)));
+        this.auroraGfx.fillRect(0,yo+wave,W,32);
+      });
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// PHASER – GAME SCENE
+// ─────────────────────────────────────────────
+class GameScene extends Phaser.Scene {
+  constructor(){ super({key:'GameScene'}); }
+
+  create(){
+    gameRef=this;
+    this.W=this.scale.width; this.H=this.scale.height;
+    this.balloon=null;
+    this.stageQueue=[]; this.stagePos=0;
+    this.shootGfx=this.add.graphics().setDepth(5);
+    this.celebTxt=this.add.text(this.W/2,this.H/2-70,'',{
+      fontSize:'24px',fontFamily:'Nunito,sans-serif',color:'#ffd580',
+      fontStyle:'bold',stroke:'#1a0a40',strokeThickness:4
+    }).setOrigin(0.5).setAlpha(0).setDepth(10);
+
+    this.events.on('wake',this.onWake,this);
+    // Only start if stages already populated (i.e. launched by startGame)
+    if(stages && stages.length) this.startStage();
+  }
+
+  onWake(){
+    // Only resume stages when woken by BreathingScene (not by startGame's wake call)
+    if(!this.wakeForBreath) return;
+    this.wakeForBreath=false;
+    document.getElementById('game-ui').style.display='block';
+    this.startStage();
+  }
+
+  startStage(){
+    const stage=stages[currentStageIdx];
+    if(!stage){ this.endGame(); return; }
+    this.stageQueue=[...stage];
+    this.stagePos=0;
+    this.updateStageInfo();
+    setBtnsEnabled(false);
+    // Use native browser events — more reliable than Phaser input across devices
+    this._launchCB=(e)=>{
+      if(e.type==='keydown' && e.code!=='Space') return;
+      this.launchFirstBalloon();
+    };
+    window.addEventListener('keydown', this._launchCB);
+    const hint=document.getElementById('launch-hint');
+    if(hint){
+      hint.style.display='block';
+      hint.style.pointerEvents='all';
+      hint.style.cursor='pointer';
+      hint.addEventListener('click', this._launchCB, {once:true});
+    }
+  }
+
+  launchFirstBalloon(){
+    if(!this._launchCB) return;
+    window.removeEventListener('keydown', this._launchCB);
+    const hint=document.getElementById('launch-hint');
+    if(hint){
+      hint.removeEventListener('click', this._launchCB);
+      hint.style.display='none';
+      hint.style.pointerEvents='none';
+      hint.style.cursor='';
+    }
+    this._launchCB=null;
+    this.showNextBalloon();
+  }
+
+  updateStageInfo(){
+    document.getElementById('stage-info').textContent=`Stage ${currentStageIdx+1} of ${stages.length}`;
+  }
+
+  showNextBalloon(){
+    if(this.stagePos>=this.stageQueue.length){ this.completeStage(); return; }
+    balloonLocked=false;
+    setBtnsEnabled(true);
+    const thought=this.stageQueue[this.stagePos];
+    const W=this.scale.width, H=this.scale.height;
+    this.W=W; this.H=H; // keep in sync
+    this.balloon=this.spawnBalloon(W/2, H+130, thought);
+    this.tweens.add({
+      targets:this.balloon, y:H*0.43, duration:900, ease:'Back.Out',
+      onComplete:()=>this.bobBalloon(this.balloon, H*0.43)
+    });
+  }
+
+  spawnBalloon(x,y,thought){
+    const c=this.add.container(x,y).setDepth(3);
+    const tilt=(Math.random()-0.5)*22;
+    const sx=0.9+Math.random()*0.22, sy=0.88+Math.random()*0.24;
+    const faces=['happy','grumpy','surprised','sleepy','happy','happy'];
+    const face=faces[Math.floor(Math.random()*faces.length)];
+    const pal=thought.palette;
+    const bw=112*sx, bh=148*sy;
+
+    const g=this.add.graphics();
+    // String
+    g.lineStyle(1.5,0xcccccc,0.55);
+    g.beginPath(); g.moveTo(0,bh/2+8);
+    g.bezierCurveTo(7,bh/2+22,-7,bh/2+42,5,bh/2+62);
+    g.strokePath();
+    // Shadow
+    g.fillStyle(0x000000,0.1); g.fillEllipse(5,6,bw,bh);
+    // Body
+    g.fillStyle(pal.fill,1); g.fillEllipse(0,0,bw,bh);
+    // Highlights
+    g.fillStyle(0xffffff,0.38); g.fillEllipse(-bw*0.22,-bh*0.24,bw*0.36,bh*0.28);
+    g.fillStyle(0xffffff,0.10); g.fillEllipse(0,0,bw*0.6,bh*0.6);
+    // Knot
+    const kc=this.darken(pal.fill,30);
+    g.fillStyle(kc,1); g.fillCircle(0,bh/2+3,7);
+    // Face
+    this.drawFace(g,face,bw,bh);
+    c.add(g);
+
+    // Text
+    const raw=thought.text.length>55?thought.text.slice(0,52)+'…':thought.text;
+    const displayText=thought.nickname?`"${raw}"\n(${thought.nickname})`:raw;
+    const fs=raw.length>40?'10px':raw.length>26?'12px':'13px';
+    const txt=this.add.text(0,-bh*0.06,displayText,{
+      fontSize:fs,fontFamily:'Nunito,sans-serif',color:'#1a0840',
+      fontStyle:'bold',align:'center',wordWrap:{width:bw*0.76},lineSpacing:2
+    }).setOrigin(0.5);
+    c.add(txt);
+    c.setRotation(Phaser.Math.DegToRad(tilt)).setAlpha(0);
+    this.tweens.add({targets:c,alpha:1,duration:380});
+    return c;
+  }
+
+  darken(col,amt){
+    const r=Math.max(0,((col>>16)&0xff)-amt);
+    const g=Math.max(0,((col>>8)&0xff)-amt);
+    const b=Math.max(0,(col&0xff)-amt);
+    return (r<<16)|(g<<8)|b;
+  }
+
+  drawFace(g,face,bw,bh){
+    const ey=-bh*0.07, ex=bw*0.165, er=bw*0.052;
+    g.fillStyle(0x1a0840,1);
+    if(face==='surprised'){
+      g.fillCircle(-ex,ey,er*1.5); g.fillCircle(ex,ey,er*1.5);
+    } else {
+      const eyH=face==='sleepy'?er*0.9:er*2;
+      g.fillEllipse(-ex,ey,er*2,eyH); g.fillEllipse(ex,ey,er*2,eyH);
+    }
+    g.fillStyle(0xffffff,0.8);
+    g.fillCircle(-ex+er*0.55,ey-er*0.4,er*0.38);
+    g.fillCircle(ex+er*0.55,ey-er*0.4,er*0.38);
+    if(face==='grumpy'){
+      g.lineStyle(er*0.85,0x1a0840,1);
+      g.beginPath(); g.moveTo(-ex-er*1.6,ey-er*2.4); g.lineTo(-ex+er*0.4,ey-er*1.4); g.strokePath();
+      g.beginPath(); g.moveTo(ex+er*1.6,ey-er*2.4); g.lineTo(ex-er*0.4,ey-er*1.4); g.strokePath();
+    }
+    if(face==='happy'||face==='surprised'){
+      g.fillStyle(0xff8888,0.32);
+      g.fillEllipse(-ex*1.6,ey+er*2.8,er*3.2,er*1.9);
+      g.fillEllipse(ex*1.6,ey+er*2.8,er*3.2,er*1.9);
+    }
+    const my=ey+bh*0.17;
+    if(face!=='surprised'){
+      g.lineStyle(er*0.75,0x1a0840,0.9);
+      g.beginPath();
+      if(face==='happy') g.arc(0,my-er*1.3,er*2.2,0.25,Math.PI-0.25);
+      else if(face==='grumpy') g.arc(0,my+er*1.8,er*2.2,Math.PI+0.25,2*Math.PI-0.25);
+      else if(face==='sleepy'){ g.moveTo(-er*1.6,my); g.lineTo(er*1.6,my); }
+      g.strokePath();
+    } else {
+      g.fillStyle(0x1a0840,0.65); g.fillEllipse(0,my,er*2.4,er*3.2);
+    }
+  }
+
+  bobBalloon(c,cy){
+    if(!c||!c.active) return;
+    this.tweens.add({targets:c,y:cy-14,duration:2900,ease:'Sine.InOut',yoyo:true,repeat:-1});
+    this.tweens.add({targets:c,x:this.W/2+12,duration:3300,ease:'Sine.InOut',yoyo:true,repeat:-1});
+  }
+
+  labelBalloon(type){
+    if(balloonLocked||!this.balloon) return;
+    balloonLocked=true;
+    setBtnsEnabled(false);
+
+    const b=this.balloon, bx=b.x, by=b.y;
+    sessionStars++;
+    couragePoints++;
+    document.getElementById('star-count').textContent=`⭐ ${sessionStars}`;
+    const pct=Math.min(1,couragePoints/totalBalloons);
+    document.getElementById('courage-fill').style.height=(pct*100)+'%';
+
+    const starCols=[0xffffff,0xffd8b0,0xc8d0ff,0xffd580,0xffc8e8];
+    if(skyRef) skyRef.addPermStar(
+      30+Math.random()*(this.W-60),
+      20+Math.random()*(this.H*0.62),
+      starCols[Math.floor(Math.random()*starCols.length)]
+    );
+
+    if(type==='trick'){
+      brainTrickStreak++;
+      playSparkle();
+      this.burst(bx,by,this.stageQueue[this.stagePos].palette.fill,true);
+      if(brainTrickStreak>=3 && brainTrickStreak%3===0){
+        this.time.delayedCall(280,()=>this.celebrate(bx,by));
+      }
+    } else {
+      brainTrickStreak=0;
+      playWhoosh();
+      this.burst(bx,by,0xffffff,false);
+    }
+
+    if(pct>=1 && skyRef){
+      skyRef.triggerAurora();
+      skyRef.triggerMoonPulse();
+      skyRef.spawnAnimal();
+    }
+
+    this.tweens.killTweensOf(b);
+    this.tweens.add({targets:b,y:-220,alpha:0,duration:1000,ease:'Cubic.In',
+      onComplete:()=>{ b.destroy(); this.balloon=null; this.stagePos++;
+        this.time.delayedCall(350,()=>this.showNextBalloon()); }
+    });
+    this.tweens.add({targets:b,rotation:b.rotation+(Math.random()-0.5)*0.9,duration:1000});
+  }
+
+  burst(x,y,col,sparkly){
+    const n=sparkly?14:8;
+    for(let i=0;i<n;i++){
+      const g=this.add.graphics().setDepth(8);
+      g.fillStyle(col,1);
+      g.fillCircle(0,0,sparkly?3+Math.random()*3:2.5+Math.random()*2);
+      g.x=x; g.y=y;
+      const ang=(Math.PI*2*i)/n+Math.random()*0.4;
+      const d=38+Math.random()*55;
+      this.tweens.add({targets:g,x:x+Math.cos(ang)*d,y:y+Math.sin(ang)*d,
+        alpha:0,scaleX:0.2,scaleY:0.2,
+        duration:500+Math.random()*300,ease:'Cubic.Out',onComplete:()=>g.destroy()});
+    }
+    if(sparkly){
+      for(let i=0;i<5;i++){
+        const g=this.add.graphics().setDepth(8);
+        g.fillStyle(0xffd580,1);
+        g.fillCircle(0,0,4);
+        g.x=x+(Math.random()-0.5)*28; g.y=y+(Math.random()-0.5)*28;
+        this.tweens.add({targets:g,y:g.y-45-Math.random()*35,alpha:0,
+          duration:750,ease:'Cubic.Out',onComplete:()=>g.destroy()});
+      }
+    }
+  }
+
+  celebrate(x,y){
+    playCelebration();
+    this.fireShootingStar();
+    if(skyRef) skyRef.addConstellation(
+      30+Math.random()*(this.W-60),
+      18+Math.random()*(this.H*0.52)
+    );
+    const msgs=['✨ Brain Power! ✨','🌟 3 in a Row! 🌟','💫 You got this! 💫','⭐ Amazing! ⭐'];
+    this.celebTxt.setText(msgs[Math.floor(Math.random()*msgs.length)]);
+    this.celebTxt.setAlpha(0).setScale(0.5);
+    this.tweens.add({targets:this.celebTxt,alpha:1,scaleX:1.08,scaleY:1.08,
+      duration:380,ease:'Back.Out',
+      onComplete:()=>this.time.delayedCall(1300,()=>{
+        this.tweens.add({targets:this.celebTxt,alpha:0,scaleX:0.8,scaleY:0.8,duration:350});
+      })
+    });
+
+    // Show streak badge
+    const badge=document.getElementById('streak-msg');
+    badge.textContent='🔥 '+brainTrickStreak+' Brain Tricks in a row!';
+    badge.style.opacity='1';
+    setTimeout(()=>badge.style.opacity='0',2000);
+  }
+
+  fireShootingStar(){
+    const W=this.W, H=this.H;
+    const sx=Math.random()*W*0.4, sy=Math.random()*H*0.22;
+    const ex=sx+W*0.55+Math.random()*W*0.2, ey=sy+70+Math.random()*70;
+    const g=this.shootGfx;
+    const trail=[];
+    let p=0;
+    this.time.addEvent({delay:16,repeat:44,callback:()=>{
+      p+=0.023;
+      trail.push({x:sx+(ex-sx)*p,y:sy+(ey-sy)*p,a:1});
+      g.clear();
+      trail.forEach((pt,i)=>{
+        pt.a-=0.055; if(pt.a>0){ g.fillStyle(0xffffff,pt.a); g.fillCircle(pt.x,pt.y,2.2-i*0.03); }
+      });
+      if(p>=1) this.time.delayedCall(250,()=>g.clear());
+    }});
+  }
+
+  completeStage(){
+    if(this._launchCB){
+      window.removeEventListener('keydown',this._launchCB);
+      const hint=document.getElementById('launch-hint');
+      if(hint){ hint.removeEventListener('click',this._launchCB); hint.style.display='none'; }
+      this._launchCB=null;
+    }
+    currentStageIdx++;
+    if(currentStageIdx>=stages.length){ this.endGame(); return; }
+    document.getElementById('game-ui').style.display='none';
+    this.wakeForBreath=true; // tell onWake to auto-resume
+    this.scene.sleep('GameScene');
+    this.scene.launch('BreathingScene');
+  }
+
+  endGame(){
+    const hint=document.getElementById('launch-hint');
+    if(hint) hint.style.display='none';
+    document.getElementById('game-ui').style.display='none';
+    showEndScreen();
+  }
+}
+
+// ─────────────────────────────────────────────
+// PHASER – BREATHING SCENE
+// ─────────────────────────────────────────────
+class BreathingScene extends Phaser.Scene {
+  constructor(){ super({key:'BreathingScene'}); }
+
+  create(){
+    this.W=this.scale.width; this.H=this.scale.height;
+    this.orbGfx=this.add.graphics().setDepth(4);
+    this.orbR=58; this.targetR=58;
+    this.cycleCount=0; this.phase='in';
+    this.particles=[];
+    for(let i=0;i<18;i++){
+      this.particles.push({
+        ang:(Math.PI*2*i)/18, dist:85,
+        r:1.8+Math.random()*2, a:0.35,
+        col:[0xc084fc,0x80deea,0xffd580,0xff9ede][Math.floor(Math.random()*4)]
+      });
+    }
+    const ov=document.getElementById('breath-overlay');
+    ov.style.display='flex';
+    this.startPhase('in');
+  }
+
+  startPhase(ph){
+    this.phase=ph;
+    const mainEl=document.getElementById('breath-main');
+    const subEl=document.getElementById('breath-sub');
+    if(ph==='in'){
+      mainEl.textContent='Breathe in…'; this.targetR=108;
+      playBreathTone('in');
+    } else {
+      mainEl.textContent='Breathe out…'; this.targetR=52;
+      playBreathTone('out');
+    }
+    const left=3-this.cycleCount;
+    subEl.textContent=left===1?'Last breath…':`${left} breaths to go`;
+    const dur=ph==='in'?4200:4600;
+    this.time.delayedCall(dur,()=>{
+      if(ph==='in') this.startPhase('out');
+      else {
+        this.cycleCount++;
+        if(this.cycleCount>=3) this.finish();
+        else this.startPhase('in');
+      }
+    });
+  }
+
+  finish(){
+    document.getElementById('breath-overlay').style.display='none';
+    document.getElementById('game-ui').style.display='block';
+    this.scene.stop('BreathingScene');
+    this.scene.wake('GameScene');
+  }
+
+  shutdown(){
+    document.getElementById('breath-overlay').style.display='none';
+  }
+
+  update(time){
+    const t=time/1000;
+    this.orbR+=(this.targetR-this.orbR)*0.03;
+    const cx=this.W/2, cy=this.H/2-15, r=this.orbR;
+    const g=this.orbGfx;
+    g.clear();
+    [[r*2.4,0.038],[r*1.8,0.07],[r*1.38,0.12],[r*1.16,0.18]].forEach(([gr,ga])=>{
+      g.fillStyle(0xd4a8ff,ga*(0.75+0.25*Math.sin(t*0.7))); g.fillCircle(cx,cy,gr);
+    });
+    g.fillStyle(0xf0eaff,0.95); g.fillCircle(cx,cy,r);
+    g.fillStyle(0xffffff,0.45); g.fillCircle(cx-r*0.26,cy-r*0.3,r*0.34);
+    const tc=this.phase==='in'?0xc084fc:0x80deea;
+    g.fillStyle(tc,0.14); g.fillCircle(cx,cy,r);
+    this.particles.forEach((p,i)=>{
+      p.ang+=0.0025+i*0.0001;
+      const px=cx+Math.cos(p.ang)*(r+18+Math.sin(t+i)*7);
+      const py=cy+Math.sin(p.ang)*(r+18+Math.cos(t+i)*7);
+      g.fillStyle(p.col,p.a*(0.45+0.55*Math.sin(t*1.4+i)));
+      g.fillCircle(px,py,p.r);
+    });
+  }
+}
+
+// ─────────────────────────────────────────────
+// PHASER INIT
+// ─────────────────────────────────────────────
+function initPhaser(){
+  phaserGame=new Phaser.Game({
+    type:Phaser.AUTO,
+    parent:'game',
+    transparent:true,
+    scale:{mode:Phaser.Scale.RESIZE,parent:'game',width:'100%',height:'100%'},
+    scene:[SkyScene,GameScene,BreathingScene]
+  });
+}
+
+// ─────────────────────────────────────────────
+// SCREEN 1 LOGIC
+// ─────────────────────────────────────────────
+document.getElementById('goblin-img').src='data:image/gif;base64,'+WALK_GIF_B64;
+document.getElementById('goblin-game').src='data:image/gif;base64,'+WALK_GIF_B64;
+
+function addThought(){
+  const tin=document.getElementById('thought-input');
+  const nin=document.getElementById('nick-input');
+  const txt=tin.value.trim();
+  if(!txt) return;
+  const idx=thoughts.length%PALETTE.length;
+  thoughts.push({text:txt,nickname:nin.value.trim(),palette:PALETTE[idx],hex:PALETTE[idx].hex});
+  tin.value=''; nin.value=''; tin.focus();
+  renderList(); renderColors();
+  document.getElementById('start-btn').classList.toggle('vis',thoughts.length>0);
+}
+
+function renderList(){
+  const ul=document.getElementById('thought-list');
+  ul.innerHTML='';
+  thoughts.forEach((t,i)=>{
+    const li=document.createElement('li');
+    li.className='thought-item';
+    li.style.borderLeftColor=t.hex;
+    li.innerHTML=`<span class="t-star">⭐</span>
+      <div class="t-block">
+        <div class="t-main">${escHtml(t.text)}</div>
+        ${t.nickname?`<div class="t-nick">"${escHtml(t.nickname)}"</div>`:''}
+      </div>`;
+    ul.appendChild(li);
+  });
+}
+
+function renderColors(){
+  const row=document.getElementById('color-row');
+  row.innerHTML='';
+  thoughts.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='c-dot'; d.style.background=t.hex;
+    row.appendChild(d);
+  });
+}
+
+function setBtnsEnabled(on){
+  document.getElementById('btn-trick').disabled=!on;
+  document.getElementById('btn-danger').disabled=!on;
+}
+
+// ─────────────────────────────────────────────
+// START GAME
+// ─────────────────────────────────────────────
+function startGame(){
+  if(!thoughts.length) return;
+  startAmbient();
+  stages=generateStages(thoughts);
+  currentStageIdx=0; sessionStars=0; brainTrickStreak=0;
+  couragePoints=0; totalBalloons=stages.reduce((s,st)=>s+st.length,0);
+  document.getElementById('courage-fill').style.height='0%';
+  document.getElementById('star-count').textContent='⭐ 0';
+  const s1=document.getElementById('screen1');
+  s1.style.opacity='0';
+  s1.style.pointerEvents='none'; // stop blocking taps immediately even during fade
+  setTimeout(()=>s1.style.display='none',600);
+  document.getElementById('game-ui').style.display='block';
+  setBtnsEnabled(false);
+  balloonLocked=false;
+  // GameScene was pre-launched at boot — gameRef is already set.
+  // Just tell it to start the first stage directly.
+  if(gameRef){
+    if(gameRef.balloon){ gameRef.balloon.destroy(); gameRef.balloon=null; }
+    gameRef.stageQueue=[]; gameRef.stagePos=0;
+    // Wake it if a previous play left it sleeping
+    if(phaserGame && !phaserGame.scene.isActive('GameScene')){
+      phaserGame.scene.wake('GameScene');
+    }
+    gameRef.startStage();
+  }
+  // Fade in the HTML goblin GIF in the game corner
+  const gob=document.getElementById('goblin-game');
+  if(gob) gob.style.opacity='0.88';
+}
+
+// ─────────────────────────────────────────────
+// END SCREEN
+// ─────────────────────────────────────────────
+function showEndScreen(){
+  const s4=document.getElementById('screen4');
+  s4.style.opacity='0'; s4.style.display='block';
+  setTimeout(()=>s4.style.opacity='1',40);
+  const stars='⭐'.repeat(Math.max(1,Math.min(sessionStars,12)));
+  document.getElementById('s4-stars').textContent=stars;
+  document.getElementById('s4-msg').textContent=
+    `You faced ${thoughts.length} thought${thoughts.length!==1?'s':''} tonight. That's real courage.`;
+  const ul=document.getElementById('s4-list');
+  ul.innerHTML='';
+  thoughts.forEach((t,i)=>{
+    const li=document.createElement('li');
+    li.className='s4-item'; li.style.animationDelay=(i*0.08)+'s';
+    li.innerHTML=`<span class="s4-dot" style="background:${t.hex}"></span><span>${escHtml(t.text)}</span>`;
+    ul.appendChild(li);
+  });
+}
+
+function resetGame(){
+  thoughts=[]; stages=[]; currentStageIdx=0;
+  sessionStars=0; brainTrickStreak=0; couragePoints=0; totalBalloons=0;
+  document.getElementById('screen4').style.display='none';
+  const s1=document.getElementById('screen1');
+  s1.style.display='block'; s1.style.opacity='1';
+  document.getElementById('thought-list').innerHTML='';
+  document.getElementById('color-row').innerHTML='';
+  document.getElementById('thought-input').value='';
+  document.getElementById('nick-input').value='';
+  document.getElementById('start-btn').classList.remove('vis');
+  if(skyRef){ skyRef.permStars=[]; skyRef.constellations=[]; }
+  // Clean up game objects but keep GameScene active so gameRef stays valid
+  if(gameRef){
+    if(gameRef.balloon){ gameRef.balloon.destroy(); gameRef.balloon=null; }
+    gameRef.stageQueue=[]; gameRef.stagePos=0;
+    gameRef.tweens.killAll();
+  }
+  if(phaserGame) phaserGame.scene.stop('BreathingScene');
+  document.getElementById('breath-overlay').style.display='none';
+}
+
+// ─────────────────────────────────────────────
+// EVENTS
+// ─────────────────────────────────────────────
+document.getElementById('add-btn').addEventListener('click',addThought);
+document.getElementById('thought-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addThought();}
+});
+document.getElementById('start-btn').addEventListener('click',startGame);
+document.getElementById('again-btn').addEventListener('click',resetGame);
+document.getElementById('btn-trick').addEventListener('click',()=>{ if(gameRef) gameRef.labelBalloon('trick'); });
+document.getElementById('btn-danger').addEventListener('click',()=>{ if(gameRef) gameRef.labelBalloon('danger'); });
+
+// ─────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────
+initPhaser();
+</script>
+</body>
+</html>
